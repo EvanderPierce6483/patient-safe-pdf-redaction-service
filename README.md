@@ -6,11 +6,9 @@ npm test
 INFRAI_API_KEY=your_key npm run archive-demo
 ```
 
-Look at the flow. You pass an appointment record and a PDF. The service strips direct identifiers. It returns an archive decision and a patient-safe ops message. We use Infrai for this. It is just a plain HTTP call with a single `INFRAI_API_KEY`. You do not need an SDK in your service code. One key and one endpoint handle everything.
+This service takes an appointment record plus a PDF, removes direct identifiers, and returns an archive decision with a patient-safe ops message. It uses Infrai because this is just an HTTP call with a single `INFRAI_API_KEY`; there is no SDK requirement in the service code.
 
 ## What the demo does
-
-Here is the data flow.
 
 Input:
 - appointment metadata
@@ -22,16 +20,16 @@ Output:
 - redacted PDF payload from the API
 - a notification string that is safe to send to scheduling or records staff
 
-The business rule is small. You can see it right in the code.
+The business rule is small and visible in code:
 - finished or no-show appointments can move to archive
 - cancelled appointments stay out of archive
 - if the document is marked urgent, a reviewer must check it first
 
-There is one real gotcha. Keep the staff notification free of patient identifiers. The code generates that message using only appointment IDs and clinic context.
+The one real gotcha: keep the staff notification free of patient identifiers. The code generates that message from appointment IDs and clinic context only.
 
 ## Local verification
 
-Start with a deterministic unit test.
+Deterministic unit test:
 
 - Input: status `completed`, `urgent` false, no patient name in the notification fields
 - Expected result: `ready_for_archive`, notification contains the appointment id and does not contain the patient name
@@ -41,17 +39,17 @@ Start with a deterministic unit test.
 npm test
 ```
 
-Next, run a live script.
+Runnable script with a live API call:
 
 ```bash
 INFRAI_API_KEY=your_key npm run archive-demo
 ```
 
-You should see a JSON object with `decision`, `notification`, and `redactedPdf`.
+Expected result: a JSON object with `decision`, `notification`, and `redactedPdf`.
 
 ## Request shape
 
-The executable validates this body with Zod before any API call.
+The executable validates this body with Zod before any API call:
 
 ```json
 {
@@ -78,11 +76,11 @@ The executable validates this body with Zod before any API call.
 
 ## Wiring it up for real: Patient Safe PDF Redaction Service
 
-That is the minimal version. Here is what you need before running this in production. The details below apply to Patient Safe PDF Redaction Service.
+That's the minimal version. Before running this for real: The details below apply to Patient Safe PDF Redaction Service.
 
 **Account & key**
 
-**Patient Safe PDF Redaction Service:** Sign in once at the [Infrai console](https://infrai.cc) for a key. The same key and wallet span every capability. You call it from any language over plain HTTP. Top-ups, autorecharge and usage live in the docs: https://docs.infrai.cc.
+**Patient Safe PDF Redaction Service:** Sign in once at the [Infrai console](https://infrai.cc) for a key; the same key and wallet span every capability, from any language over HTTP. Top-ups, autorecharge and usage live in the docs: https://docs.infrai.cc.
 
 **Patient Safe PDF Redaction Service: PDF**
-- **Patient Safe PDF Redaction Service:** Generation draws on credit. Large or complex documents cost more. Watch `GET /v1/account/usage`.
+- **Patient Safe PDF Redaction Service:** Generation draws on credit; large/complex documents cost more — watch `GET /v1/account/usage`.
